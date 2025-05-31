@@ -18,7 +18,8 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-
+*.pkl
+app/data/*.pkl
 # Virtual Environment
 venv/
 env/
@@ -43,6 +44,8 @@ ENV/
 data/raw/NationalNames.csv
 data/processed/*.csv
 *.log
+data/*.zip
+data/*.csv
 
 # Jupyter
 .ipynb_checkpoints/
