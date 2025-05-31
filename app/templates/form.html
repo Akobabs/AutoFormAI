@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Demo - WebFormAutocomplete{% endblock %}
+
+{% block content %}
+<div class="demo-section">
+    <div class="container">
+        <div class="demo-header">
+            <h2><i class="fas fa-keyboard"></i> Interactive Demo</h2>
+            <p>Try typing names or email addresses to see the autocomplete in action.</p>
+        </div>
+
+        <div class="demo-forms">
+            <div class="form-card">
+                <h3><i class="fas fa-user"></i> Name Autocomplete</h3>
+                <form id="name-form" class="autocomplete-form">
+                    <div class="input-group">
+                        <label for="name-input">Enter your name:</label>
+                        <div class="autocomplete-container">
+                            <input 
+                                type="text" 
+                                id="name-input" 
+                                class="autocomplete-input"
+                                placeholder="Start typing a name..."
+                                autocomplete="off"
+                                data-category="name"
+                            >
+                            <ul id="name-suggestions" class="autocomplete-suggestions"></ul>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i>
+                        Submit Name
+                    </button>
+                </form>
+            </div>
+
+            <div class="form-card">
+                <h3><i class="fas fa-envelope"></i> Email Autocomplete</h3>
+                <form id="email-form" class="autocomplete-form">
+                    <div class="input-group">
+                        <label for="email-input">Enter your email:</label>
+                        <div class="autocomplete-container">
+                            <input 
+                                type="email" 
+                                id="email-input" 
+                                class="autocomplete-input"
+                                placeholder="Start typing an email..."
+                                autocomplete="off"
+                                data-category="email"
+                            >
+                            <ul id="email-suggestions" class="autocomplete-suggestions"></ul>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i>
+                        Submit Email
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="demo-info">
+            <div class="info-card">
+                <h4><i class="fas fa-info-circle"></i> How it works</h4>
+                <ul>
+                    <li>Type at least one character to see suggestions</li>
+                    <li>Suggestions are ranked by popularity and relevance</li>
+                    <li>Click on a suggestion or use arrow keys to navigate</li>
+                    <li>Your interactions help improve future suggestions</li>
+                </ul>
+            </div>
+            
+            <div class="info-card">
+                <h4><i class="fas fa-cog"></i> Technical Details</h4>
+                <ul>
+                    <li>Powered by optimized Trie data structure</li>
+                    <li>Real-time search with sub-millisecond response</li>
+                    <li>Machine learning-based ranking algorithm</li>
+                    <li>Comprehensive analytics and user interaction tracking</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/autocomplete.js') }}"></script>
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+{% endblock %}

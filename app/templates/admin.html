@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - WebFormAutocomplete{% endblock %}
+
+{% block content %}
+<div class="admin-section">
+    <div class="container">
+        <div class="admin-header">
+            <h2><i class="fas fa-cogs"></i> Admin Panel</h2>
+            <p>Manage suggestions, import datasets, and configure system settings.</p>
+        </div>
+
+        <div class="admin-grid">
+            <div class="admin-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-upload"></i> Import Data</h3>
+                </div>
+                <div class="card-content">
+                    <form id="import-form">
+                        <div class="form-group">
+                            <label for="dataset-type">Dataset Type:</label>
+                            <select id="dataset-type" name="type" class="form-select">
+                                <option value="names">US Baby Names</option>
+                                <option value="emails">Synthetic Emails</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="count-group" style="display: none;">
+                            <label for="email-count">Number of Emails:</label>
+                            <input type="number" id="email-count" name="count" value="1000" min="1" max="10000" class="form-input">
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload"></i>
+                            Import Dataset
+                        </button>
+                    </form>
+                    <div id="import-status" class="status-message"></div>
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-plus"></i> Add Suggestion</h3>
+                </div>
+                <div class="card-content">
+                    <form id="suggestion-form">
+                        <div class="form-group">
+                            <label for="suggestion-text">Suggestion Text:</label>
+                            <input type="text" id="suggestion-text" name="text" class="form-input" placeholder="Enter suggestion...">
+                        </div>
+                        <div class="form-group">
+                            <label for="suggestion-category">Category:</label>
+                            <select id="suggestion-category" name="category" class="form-select">
+                                <option value="general">General</option>
+                                <option value="name">Name</option>
+                                <option value="email">Email</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                            Add Suggestion
+                        </button>
+                    </form>
+                    <div id="suggestion-status" class="status-message"></div>
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-sync"></i> System Operations</h3>
+                </div>
+                <div class="card-content">
+                    <div class="operation-buttons">
+                        <button id="rebuild-trie-btn" class="btn btn-warning">
+                            <i class="fas fa-hammer"></i>
+                            Rebuild Trie
+                        </button>
+                        <button id="clear-cache-btn" class="btn btn-secondary">
+                            <i class="fas fa-broom"></i>
+                            Clear Cache
+                        </button>
+                        <button id="backup-db-btn" class="btn btn-info">
+                            <i class="fas fa-save"></i>
+                            Backup Database
+                        </button>
+                    </div>
+                    <div id="operation-status" class="status-message"></div>
+                </div>
+            </div>
+
+            <div class="admin-card full-width">
+                <div class="card-header">
+                    <h3><i class="fas fa-list"></i> Recent Suggestions</h3>
+                </div>
+                <div class="card-content">
+                    <div class="suggestions-table">
+                        <div class="table-header">
+                            <span>Text</span>
+                            <span>Category</span>
+                            <span>Frequency</span>
+                            <span>Created</span>
+                            <span>Actions</span>
+                        </div>
+                        <div id="suggestions-list" class="table-body">
+                            <!-- Dynamically populated -->
+                        </div>
+                    </div>
+                    <div class="pagination">
+                        <button id="prev-page" class="btn btn-sm">Previous</button>
+                        <span id="page-info">Page 1 of 1</span>
+                        <button id="next-page" class="btn btn-sm">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Dataset type change handler
+    document.getElementById('dataset-type').addEventListener('change', function() {
+        const countGroup = document.getElementById('count-group');
+        if (this.value === 'emails') {
+            countGroup.style.display = 'block';
+        } else {
+            countGroup.style.display = 'none';
+        }
+    });
+
+    // Import form handler
+    document.getElementById('import-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const statusDiv = document.getElementById('import-status');
+        
+        statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing...';
+        statusDiv.className = 'status-message status-loading';
+        
+        try {
+            const response = await fetch('/api/import-dataset', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                statusDiv.innerHTML = `<i class="fas fa-check"></i> ${result.message}`;
+                statusDiv.className = 'status-message status-success';
+            } else {
+                statusDiv.innerHTML = `<i class="fas fa-times"></i> ${result.error}`;
+                statusDiv.className = 'status-message status-error';
+            }
+        } catch (error) {
+            statusDiv.innerHTML = `<i class="fas fa-times"></i> Import failed: ${error.message}`;
+            statusDiv.className = 'status-message status-error';
+        }
+    });
+
+    // Suggestion form handler
+    document.getElementById('suggestion-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const text = document.getElementById('suggestion-text').value;
+        const category = document.getElementById('suggestion-category').value;
+        const statusDiv = document.getElementById('suggestion-status');
+        
+        if (!text.trim()) {
+            statusDiv.innerHTML = '<i class="fas fa-exclamation"></i> Please enter suggestion text';
+            statusDiv.className = 'status-message status-error';
+            return;
+        }
+        
+        statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+        statusDiv.className = 'status-message status-loading';
+        
+        try {
+            const response = await fetch('/api/suggestion', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text, category })
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                statusDiv.innerHTML = '<i class="fas fa-check"></i> Suggestion added successfully';
+                statusDiv.className = 'status-message status-success';
+                document.getElementById('suggestion-text').value = '';
+            } else {
+                statusDiv.innerHTML = `<i class="fas fa-times"></i> ${result.error}`;
+                statusDiv.className = 'status-message status-error';
+            }
+        } catch (error) {
+            statusDiv.innerHTML = `<i class="fas fa-times"></i> Failed to add suggestion: ${error.message}`;
+            statusDiv.className = 'status-message status-error';
+        }
+    });
+
+    // Rebuild trie handler
+    document.getElementById('rebuild-trie-btn').addEventListener('click', async function() {
+        const statusDiv = document.getElementById('operation-status');
+        statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rebuilding trie...';
+        statusDiv.className = 'status-message status-loading';
+        
+        try {
+            const response = await fetch('/api/rebuild-trie', {
+                method: 'POST'
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                statusDiv.innerHTML = '<i class="fas fa-check"></i> Trie rebuilt successfully';
+                statusDiv.className = 'status-message status-success';
+            } else {
+                statusDiv.innerHTML = `<i class="fas fa-times"></i> ${result.error}`;
+                statusDiv.className = 'status-message status-error';
+            }
+        } catch (error) {
+            statusDiv.innerHTML = `<i class="fas fa-times"></i> Rebuild failed: ${error.message}`;
+            statusDiv.className = 'status-message status-error';
+        }
+    });
+});
+</script>
+{% endblock %}
