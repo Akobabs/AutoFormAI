@@ -1,0 +1,15 @@
+flask
+flask-sqlalchemy
+flask-migrate
+flask-cors
+pandas
+numpy
+faker
+python-dotenv
+redis
+celery
+scikit-learn
+matplotlib
+seaborn
+plotly
+requests
